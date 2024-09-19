@@ -5,7 +5,7 @@ Key features of the ISS Appointment Setter include:
 
 1. AI-driven conversational interface
 2. Real-time speech-to-speech capabilities
-3. Integration with existing scheduling systems
+3. Integration with existing calendar systems
 4. Automatic handling of complex scheduling scenarios
 5. Continuous learning and improvement through feedback
 
