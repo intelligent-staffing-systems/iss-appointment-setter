@@ -1,7 +1,13 @@
-// next.config.mjs
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-}
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://backend:3000/:path*', // This should match your backend service name in docker-compose
+      },
+    ]
+  },
+};
 
-export default nextConfig
+export default nextConfig;
