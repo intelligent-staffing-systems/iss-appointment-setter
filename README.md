@@ -14,4 +14,3 @@ This system aims to reduce the workload on human staff, improve appointment sche
 
 ## Project Setup
 After cloning this repo, copy the frontend/example.env to a new file frontend/.env.local and enter the values from your own Microsoft and Google Developer Accounts. 
-
