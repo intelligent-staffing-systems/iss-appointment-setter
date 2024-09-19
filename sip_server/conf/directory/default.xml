@@ -1,0 +1,14 @@
+<include>
+  <domain name="$${domain}">
+    <user id="1000">
+      <params>
+        <param name="password" value="$${default_password}"/>
+      </params>
+    </user>
+    <user id="1001">
+      <params>
+        <param name="password" value="$${default_password}"/>
+      </params>
+    </user>
+  </domain>
+</include>

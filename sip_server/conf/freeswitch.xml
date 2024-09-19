@@ -1,0 +1,28 @@
+<!-- sip_server/conf/freeswitch.xml -->
+<document type="freeswitch/xml">
+  <section name="configuration" description="Configuration">
+    <configuration name="switch.conf" description="Core Configuration">
+      <settings>
+        <param name="switchname" value="iss-appointment-setter"/>
+      </settings>
+    </configuration>
+  </section>
+
+  <section name="dialplan" description="Dialplan">
+    <context name="default">
+      <extension name="unloop">
+        <condition field="${unroll_loops}" expression="^true$"/>
+        <condition field="${sip_looped_call}" expression="^true$">
+          <action application="deflect" data="${destination_number}"/>
+        </condition>
+      </extension>
+
+      <extension name="echo">
+        <condition field="destination_number" expression="^echo$">
+          <action application="answer"/>
+          <action application="echo"/>
+        </condition>
+      </extension>
+    </context>
+  </section>
+</document>

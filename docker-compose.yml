@@ -35,6 +35,17 @@ services:
       POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"
-
+  freeswitch:
+    image: safarov/freeswitch:latest
+    ports:
+      - "5060:5060/udp"
+      - "5060:5060/tcp"
+      - "5080:5080/tcp"
+      - "8021:8021/tcp"
+    volumes:
+      - ./sip_server/conf:/etc/freeswitch
+    environment:
+      - SOUND_RATES=8000:16000
+      - SOUND_TYPES=music:en-us-callie
 volumes:
   postgres_data:
