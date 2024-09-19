@@ -1,6 +1,4 @@
 # ISS Appointment Setter
-Certainly! Here's a brief introduction to the ISS Appointment Setter:
-
 The ISS Appointment Setter is an innovative AI-powered system designed to automate and streamline the process of scheduling appointments. It leverages advanced language models and speech recognition technology to conduct real-time phone conversations with clients, handling appointment bookings efficiently and naturally.
 
 Key features of the ISS Appointment Setter include:
