@@ -11,7 +11,7 @@ Key features of the ISS Appointment Setter include:
 4. Automatic handling of complex scheduling scenarios
 5. Continuous learning and improvement through feedback
 
-This system aims to reduce the workload on human staff, improve appointment scheduling efficiency, and enhance the overall customer experience by providing a seamless, 24/7 booking service.
+This system aims to reduce the workload on human staff, improve appointment scheduling efficiency, and enhance the overall customer experience by providing a seamless booking service.
 
 
 ## Project Setup
