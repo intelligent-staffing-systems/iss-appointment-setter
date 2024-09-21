@@ -1,8 +1,7 @@
 FROM node:bookworm
 WORKDIR /app
-COPY package*.json ./
-RUN npm install
 COPY . .
+RUN npm install
 COPY .env.local .env.local
 ENV NEXT_TELEMETRY_DISABLED=1
 CMD ["npm", "run", "dev"]
