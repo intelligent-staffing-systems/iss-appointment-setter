@@ -12,10 +12,14 @@ export default async function Home() {
   }
 
   return (
-    <div className="flex items-center justify-center h-screen">
-      <Link href="/api/auth/signin"
+    <div className="flex flex-col items-center justify-center h-screen space-y-4">
+      <Link href="/api/auth/signin?callbackUrl=/dashboard&provider=google"
         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
         Sign in with Google
+      </Link>
+      <Link href="/api/auth/signin?callbackUrl=/dashboard&provider=azure-ad"
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        Sign in with Microsoft
       </Link>
     </div>
   )
