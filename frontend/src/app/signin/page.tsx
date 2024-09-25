@@ -14,7 +14,7 @@ export default function SignInPage() {
         <h2 className="text-lg font-medium mb-6 text-center">Sign in with your social account</h2>
 
         <button
-          onClick={() => signIn('microsoft', { callbackUrl: '/dashboard' })}
+          onClick={() => signIn('azure-ad', { callbackUrl: '/dashboard' })}
           className="custom-btn flex items-center justify-center bg-gray-100 border border-gray-300 text-black font-bold py-2 px-4 rounded mb-4 w-full"
         >
           <FontAwesomeIcon icon={faMicrosoft} className="mr-2" />
@@ -28,6 +28,7 @@ export default function SignInPage() {
           <FontAwesomeIcon icon={faGoogle} className="mr-2" />
           Google
         </button>
+
       </div>
     </div>
   );
