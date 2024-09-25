@@ -2,26 +2,65 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Define the color theme for light mode */
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --primary-color: rgb(0, 119, 185); /* Dark blue */
+  --secondary-color: #ffffff; /* White */
+  --text-color: #f8f9fa; /* Light text */
 }
 
+/* Define the color theme for dark mode */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --primary-color: #001f3f; /* Even darker blue */
+    --secondary-color: #171717;
+    --text-color: #ededed;
   }
 }
 
+/* Global body styles */
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Utility classes */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Custom button styles */
+/* Custom button styles */
+.custom-btn {
+  background-color: rgb(235, 251, 255); /* Maps to bg-blue-600 */
+  color: rgb(12, 103, 154); /* Maps to text-white */
+  padding: 0.5rem 1rem; /* Maps to py-2 px-6 */
+  border-radius: 0.375rem; /* Maps to rounded-lg */
+  font-weight: bold; /* Maps to font-bold */
+  transition: background-color 0.3s;
 }
+
+.custom-btn:hover {
+  background-color: white; /* Maps to hover:bg-blue-700 */
+}
+
+  .custom-header {
+    color: var(--secondary-color);
+    background-color: var(--primary-color);
+  }
+
+
+  .custom-footer {
+    color: var(--secondary-color);
+    background-color: var(--primary-color);
+  }
+
+}
+
+
