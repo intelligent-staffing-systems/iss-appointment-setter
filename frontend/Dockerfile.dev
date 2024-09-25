@@ -2,6 +2,7 @@ FROM node:bookworm
 WORKDIR /app
 COPY . .
 RUN npm install
-COPY .env.local .env.local
+RUN npm install next-auth @azure/msal-node
+CMD ["npm", "run", "dev"]
 ENV NEXT_TELEMETRY_DISABLED=1
 CMD ["npm", "run", "dev"]
