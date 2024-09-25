@@ -1,11 +1,12 @@
 // src/app/dashboard/layout.tsx
 import { ReactNode } from 'react';
 import Link from 'next/link';
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "../api/auth/[...nextauth]/route"
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../api/auth/[...nextauth]/route';
+import SignOutButton from '../components/SignOutButton'; // Import the SignOutButton component
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
 
   if (!session) {
     return <div>Please sign in to access the dashboard.</div>;
@@ -28,6 +29,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
           <Link href="/dashboard/settings" className="block px-4 py-2 text-gray-600 hover:bg-gray-200">
             Settings
           </Link>
+          {/* Add the SignOutButton here */}
+          <SignOutButton />
         </nav>
       </aside>
 

@@ -8,7 +8,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
+      <body className="vsc-initialized">
         <Providers>{children}</Providers>
       </body>
     </html>
