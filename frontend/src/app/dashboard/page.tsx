@@ -1,4 +1,5 @@
 // src/app/dashboard/page.tsx
+import OutlookCalendar from "../components/OutlookCalendar"; // Adjust path if necessary
 
 export default async function DashboardHome() {
   return (
@@ -15,10 +16,10 @@ export default async function DashboardHome() {
         <p className="text-gray-600">Placeholder for future content.</p>
       </div>
 
-      {/* Widget 2 */}
+      {/* Widget 2 - Outlook Calendar */}
       <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-lg font-semibold mb-2 text-gray-800">Widget 2</h3>
-        <p className="text-gray-600">Placeholder for future content.</p>
+        <h3 className="text-lg font-semibold mb-2 text-gray-800">Outlook Calendar</h3>
+        <OutlookCalendar />
       </div>
 
       {/* Widget 3 */}
