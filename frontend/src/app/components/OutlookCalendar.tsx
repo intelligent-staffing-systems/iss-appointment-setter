@@ -160,28 +160,30 @@ export default function OutlookCalendar() {
           ? `${isSameDay(day, selectedDate ?? new Date()) ? 'bg-blue-300' : ''}
              ${isToday(day) ? 'ring-2 ring-blue-500' : ''}`
           : ''; // Avoid dynamic classes on the server side
-
-        days.push(
-          <div
-            className={`border p-1 cursor-pointer flex flex-col items-start h-24 w-full ${dynamicClasses}`}
-            key={day.toString()}
-            onClick={() => setSelectedDate(cloneDay)}
-          >
-            {/* Date number */}
-            <span className="font-bold">{format(day, 'd')}</span>
-            {/* Show first two events, with a "+x" indicator for more events */}
-            {dayEvents.slice(0, 2).map(event => (
-              <div key={event.id} className="bg-blue-500 text-white text-xs truncate rounded px-1 mt-1 w-full">
-                {isValid(new Date(event.start.dateTime)) ? format(new Date(event.start.dateTime), 'p') : 'Invalid Date'} {event.subject}
-              </div>
-            ))}
-            {/* If more than two events, show a "+x" indicator */}
-            {dayEvents.length > 2 && (
-              <div className="bg-gray-200 text-gray-600 text-xs rounded px-1 mt-1">
-                +{dayEvents.length - 2}
-              </div>
-            )}
-          </div>
+          days.push(
+            <div
+              className={`border p-1 cursor-pointer flex flex-col items-start h-24 w-full ${dynamicClasses} 
+              ${!isSameMonth(day, currentMonth) ? 'text-gray-400 bg-gray-100' : ''} my-2`} // Added 'my-2' for vertical spacing (gap)
+              key={day.toString()}
+              onClick={() => setSelectedDate(cloneDay)}
+            >
+              {/* Date number */}
+              <span className="font-bold mb-2">{format(day, 'd')}</span> {/* Added 'mb-2' to space the date number */}
+              {/* Show first two events, with a "+x" indicator for more events */}
+              {dayEvents.slice(0, 2).map(event => (
+                <div key={event.id} className="bg-blue-500 text-white text-xs truncate rounded px-1 mt-1 w-full">
+                  {isValid(new Date(event.start.dateTime)) ? format(new Date(event.start.dateTime), 'p') : 'Invalid Date'} {event.subject}
+                </div>
+              ))}
+              {/* If more than two events, show a "+x" indicator */}
+              {dayEvents.length > 2 && (
+                <div className="bg-gray-200 text-gray-600 text-xs rounded px-1 mt-1">
+                  +{dayEvents.length - 2}
+                </div>
+              )}
+            </div>
+          
+          
         );
         day = addDays(day, 1);
       }
