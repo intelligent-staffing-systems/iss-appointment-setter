@@ -2,7 +2,8 @@
 
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, isValid } from 'date-fns';
+import { Dialog } from '@headlessui/react';
 
 interface CalendarEvent {
   id: string;
@@ -11,6 +12,7 @@ interface CalendarEvent {
   end: { dateTime: string };
 }
 
+// Fetch events from Microsoft Graph API
 const fetchOutlookCalendarEvents = async (accessToken: string): Promise<CalendarEvent[]> => {
   try {
     const response = await fetch('https://graph.microsoft.com/v1.0/me/events', {
@@ -33,16 +35,59 @@ const fetchOutlookCalendarEvents = async (accessToken: string): Promise<Calendar
   }
 };
 
+// Update event using Microsoft Graph API
+const updateOutlookEvent = async (accessToken: string, eventId: string, updatedEvent: Partial<CalendarEvent>) => {
+  try {
+    const response = await fetch(`https://graph.microsoft.com/v1.0/me/events/${eventId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updatedEvent),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error updating event: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error updating event:', error);
+  }
+};
+
+// Delete event using Microsoft Graph API
+const deleteOutlookEvent = async (accessToken: string, eventId: string) => {
+  try {
+    const response = await fetch(`https://graph.microsoft.com/v1.0/me/events/${eventId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error deleting event: ${response.statusText}`);
+    }
+  } catch (error) {
+    console.error('Error deleting event:', error);
+  }
+};
+
 export default function OutlookCalendar() {
   const { data: session } = useSession();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState<Partial<CalendarEvent>>({});
   const [isHydrated, setIsHydrated] = useState(false); // Track hydration state
 
   useEffect(() => {
-    // Set hydrated to true after client-side rendering
-    setIsHydrated(true);
+    setIsHydrated(true); // Set hydrated to true after client-side rendering
   }, []);
 
   useEffect(() => {
@@ -52,7 +97,7 @@ export default function OutlookCalendar() {
           setEvents(fetchedEvents);
         })
         .catch(error => {
-          console.error('Error in useEffect fetching events:', error);
+          console.error('Error fetching events:', error);
         });
     }
   }, [session]);
@@ -65,7 +110,36 @@ export default function OutlookCalendar() {
     setSelectedDate(today); // Highlights and selects today's date
   };
 
-  // Helper function to render calendar cells
+  // Handle event click to open modal for editing or deleting
+  const handleEventClick = (event: CalendarEvent) => {
+    setSelectedEvent(event);
+    setEditForm({
+      subject: event.subject,
+      start: event.start,
+      end: event.end,
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (session?.accessToken && selectedEvent) {
+      await updateOutlookEvent(session.accessToken, selectedEvent.id, editForm);
+      setIsModalOpen(false);
+      // Refetch events to update the UI
+      fetchOutlookCalendarEvents(session.accessToken).then(setEvents);
+    }
+  };
+
+  const handleDelete = async (eventId: string) => {
+    if (session?.accessToken) {
+      await deleteOutlookEvent(session.accessToken, eventId);
+      setIsModalOpen(false);
+      setSelectedEvent(null);
+      // Refetch events to update the UI
+      fetchOutlookCalendarEvents(session.accessToken).then(setEvents);
+    }
+  };
+
   const renderCalendarCells = () => {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(monthStart);
@@ -98,7 +172,7 @@ export default function OutlookCalendar() {
             {/* Show first two events, with a "+x" indicator for more events */}
             {dayEvents.slice(0, 2).map(event => (
               <div key={event.id} className="bg-blue-500 text-white text-xs truncate rounded px-1 mt-1 w-full">
-                {format(new Date(event.start.dateTime), 'p')} {event.subject}
+                {isValid(new Date(event.start.dateTime)) ? format(new Date(event.start.dateTime), 'p') : 'Invalid Date'} {event.subject}
               </div>
             ))}
             {/* If more than two events, show a "+x" indicator */}
@@ -121,7 +195,6 @@ export default function OutlookCalendar() {
     return <div>{rows}</div>;
   };
 
-  // Helper function to render events for the selected day in the side panel
   const renderSelectedDayEvents = () => {
     const validDate = selectedDate ?? new Date();
 
@@ -136,10 +209,18 @@ export default function OutlookCalendar() {
                 <div className="flex items-center space-x-2">
                   <div className="w-1 h-full bg-blue-500"></div>
                   <div>
-                    <p className="font-semibold">{format(new Date(event.start.dateTime), 'p')} - {event.subject}</p>
+                    <p className="font-semibold">
+                      {isValid(new Date(event.start.dateTime)) ? format(new Date(event.start.dateTime), 'p') : 'Invalid Date'} - {event.subject}
+                    </p>
                     <p className="text-xs text-gray-400">30 min</p>
                   </div>
                 </div>
+                <button
+                  onClick={() => handleEventClick(event)}
+                  className="mt-2 bg-blue-500 text-white text-xs px-2 py-1 rounded"
+                >
+                  Edit
+                </button>
               </li>
             ))}
           </ul>
@@ -179,6 +260,76 @@ export default function OutlookCalendar() {
       <div className="w-1/3 bg-gray-50 p-6 rounded-lg shadow-lg">
         {isHydrated ? renderSelectedDayEvents() : <p>Loading appointments...</p>}
       </div>
+
+      {/* Modal for editing and deleting events */}
+      {selectedEvent && (
+        <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} className="fixed inset-0 z-10">
+          <div className="flex items-center justify-center min-h-screen bg-black bg-opacity-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full relative">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="absolute top-2 right-2 text-gray-600 text-2xl font-bold"
+              >
+                &times;
+              </button>
+              <Dialog.Title className="text-xl font-bold mb-4">Edit Event</Dialog.Title>
+              <label className="block mb-2">
+                <span>Subject:</span>
+                <input
+                  type="text"
+                  className="border px-2 py-1 w-full"
+                  value={editForm.subject || ''}
+                  onChange={(e) => setEditForm({ ...editForm, subject: e.target.value })}
+                />
+              </label>
+              <label className="block mb-2">
+                <span>Start Time:</span>
+                <input
+                  type="datetime-local"
+                  className="border px-2 py-1 w-full"
+                  value={isValid(new Date(editForm.start?.dateTime || '')) ? format(new Date(editForm.start?.dateTime || ''), "yyyy-MM-dd'T'HH:mm") : ''}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      start: { dateTime: new Date(e.target.value).toISOString() },
+                    })
+                  }
+                />
+              </label>
+              <label className="block mb-2">
+                <span>End Time:</span>
+                <input
+                  type="datetime-local"
+                  className="border px-2 py-1 w-full"
+                  value={isValid(new Date(editForm.end?.dateTime || '')) ? format(new Date(editForm.end?.dateTime || ''), "yyyy-MM-dd'T'HH:mm") : ''}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      end: { dateTime: new Date(e.target.value).toISOString() },
+                    })
+                  }
+                />
+              </label>
+
+              {/* Save and Delete buttons */}
+              <div className="flex justify-end space-x-4 mt-4">
+                <button
+                  onClick={handleSaveEdit}
+                  className="bg-green-500 text-white px-4 py-2 rounded-md"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => handleDelete(selectedEvent?.id || '')}
+                  className="bg-red-500 text-white px-4 py-2 rounded-md"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </Dialog>
+      )}
     </div>
   );
 }
