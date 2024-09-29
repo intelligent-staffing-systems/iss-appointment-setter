@@ -2,9 +2,8 @@
 
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday } from 'date-fns';
 
-// Define the shape of the calendar event returned by Microsoft Graph API
 interface CalendarEvent {
   id: string;
   subject: string;
@@ -39,6 +38,12 @@ export default function OutlookCalendar() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false); // Track hydration state
+
+  useEffect(() => {
+    // Set hydrated to true after client-side rendering
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
     if (session?.accessToken) {
@@ -54,7 +59,11 @@ export default function OutlookCalendar() {
 
   const nextMonth = () => setCurrentMonth(addDays(endOfMonth(currentMonth), 1));
   const prevMonth = () => setCurrentMonth(addDays(startOfMonth(currentMonth), -1));
-  const resetToToday = () => setCurrentMonth(new Date());
+  const resetToToday = () => {
+    const today = new Date();
+    setCurrentMonth(today); // Scrolls to current month
+    setSelectedDate(today); // Highlights and selects today's date
+  };
 
   // Helper function to render calendar cells
   const renderCalendarCells = () => {
@@ -72,12 +81,15 @@ export default function OutlookCalendar() {
         const cloneDay = day;
         const dayEvents = events.filter(event => isSameDay(new Date(event.start.dateTime), day));
 
+        // Apply dynamic classes only after hydration to avoid mismatches
+        const dynamicClasses = isHydrated
+          ? `${isSameDay(day, selectedDate ?? new Date()) ? 'bg-blue-300' : ''}
+             ${isToday(day) ? 'ring-2 ring-blue-500' : ''}`
+          : ''; // Avoid dynamic classes on the server side
+
         days.push(
           <div
-            className={`border p-1 cursor-pointer flex flex-col items-start h-24 w-full
-              ${isSameMonth(day, monthStart) ? '' : 'text-gray-400 bg-gray-100'} 
-              ${selectedDate && isSameDay(day, selectedDate) ? 'bg-blue-200' : ''}`
-            }
+            className={`border p-1 cursor-pointer flex flex-col items-start h-24 w-full ${dynamicClasses}`}
             key={day.toString()}
             onClick={() => setSelectedDate(cloneDay)}
           >
@@ -109,23 +121,22 @@ export default function OutlookCalendar() {
     return <div>{rows}</div>;
   };
 
-  // Helper function to render events for the selected date in the side panel
+  // Helper function to render events for the selected day in the side panel
   const renderSelectedDayEvents = () => {
-    if (!selectedDate) return <p className="text-gray-500">Select a day to view appointments.</p>;
+    const validDate = selectedDate ?? new Date();
 
-    const dayEvents = events.filter(event => isSameDay(new Date(event.start.dateTime), selectedDate));
+    const dayEvents = events.filter(event => isSameDay(new Date(event.start.dateTime), validDate));
     return (
       <div className="ml-4 p-4 border-l-2 border-gray-300">
-        <h2 className="text-xl mb-2">Appointments for {format(selectedDate, 'MMMM d, yyyy')}:</h2>
+        <h2 className="text-xl mb-2">Appointments for {format(validDate, 'MMMM d, yyyy')}:</h2>
         {dayEvents.length > 0 ? (
           <ul>
             {dayEvents.map(event => (
-              <li key={event.id} className="mb-2">
+              <li key={event.id} className="mb-2 border border-gray-300 p-2 rounded">
                 <div className="flex items-center space-x-2">
                   <div className="w-1 h-full bg-blue-500"></div>
                   <div>
                     <p className="font-semibold">{format(new Date(event.start.dateTime), 'p')} - {event.subject}</p>
-                    <p className="text-sm text-gray-500">{new Date(event.start.dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} to {new Date(event.end.dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                     <p className="text-xs text-gray-400">30 min</p>
                   </div>
                 </div>
@@ -144,11 +155,11 @@ export default function OutlookCalendar() {
       {/* Main Calendar Section */}
       <div className="w-2/3 bg-white p-6 rounded-lg shadow-lg">
         {/* Calendar header with navigation */}
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center space-x-9 mb-4">
           <button onClick={prevMonth} className="bg-gray-300 p-2 rounded">←</button>
           <h1 className="text-2xl font-bold">{format(currentMonth, 'MMMM yyyy')}</h1>
           <button onClick={nextMonth} className="bg-gray-300 p-2 rounded">→</button>
-          <button onClick={resetToToday} className="ml-2 bg-blue-500 text-white p-2 rounded">Today</button>
+          <button onClick={resetToToday} className="bg-blue-500 text-white p-2 rounded ml-2">Today</button>
         </div>
         {/* Days of the week */}
         <div className="grid grid-cols-7 text-center font-semibold">
@@ -166,7 +177,7 @@ export default function OutlookCalendar() {
 
       {/* Side panel to display events for the selected day */}
       <div className="w-1/3 bg-gray-50 p-6 rounded-lg shadow-lg">
-        {renderSelectedDayEvents()}
+        {isHydrated ? renderSelectedDayEvents() : <p>Loading appointments...</p>}
       </div>
     </div>
   );
