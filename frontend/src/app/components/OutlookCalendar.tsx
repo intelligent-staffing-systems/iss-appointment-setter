@@ -35,24 +35,43 @@ const fetchOutlookCalendarEvents = async (accessToken: string): Promise<Calendar
   }
 };
 
-// Update event using Microsoft Graph API
+/// Update event using Microsoft Graph API
 const updateOutlookEvent = async (accessToken: string, eventId: string, updatedEvent: Partial<CalendarEvent>) => {
   try {
+    const eventPayload = {
+      subject: updatedEvent.subject,
+      start: {
+        dateTime: updatedEvent.start?.dateTime, 
+        timeZone: 'UTC'
+      },
+      end: {
+        dateTime: updatedEvent.end?.dateTime, 
+        timeZone: 'UTC'
+      },
+    };
+
+    console.log("Updating event with ID: ", eventId);
+    console.log("Payload being sent to API: ", eventPayload);
+
     const response = await fetch(`https://graph.microsoft.com/v1.0/me/events/${eventId}`, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(updatedEvent),
+      body: JSON.stringify(eventPayload),
     });
 
+    console.log("Response status: ", response.status);
+    const responseData = await response.json();
+    console.log("API response data: ", responseData);
+
     if (!response.ok) {
+      console.error(`Error updating event: ${responseData.error.message}`);
       throw new Error(`Error updating event: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    return data;
+    return responseData;
   } catch (error) {
     console.error('Error updating event:', error);
   }
@@ -121,14 +140,42 @@ export default function OutlookCalendar() {
     setIsModalOpen(true);
   };
 
+  // Handle save edit
   const handleSaveEdit = async () => {
     if (session?.accessToken && selectedEvent) {
-      await updateOutlookEvent(session.accessToken, selectedEvent.id, editForm);
+      // Ensure start time is before end time
+      const startDateTime = new Date(editForm.start?.dateTime ?? '').toISOString();
+      const endDateTime = new Date(editForm.end?.dateTime ?? '').toISOString();
+  
+      // Validate that the start time is before the end time
+      if (new Date(startDateTime) >= new Date(endDateTime)) {
+        console.error('Error: Start time cannot be after end time');
+        return;
+      }
+  
+      const formattedPayload = {
+        subject: editForm.subject,
+        start: {
+          dateTime: startDateTime, 
+          timeZone: 'UTC'
+        },
+        end: {
+          dateTime: endDateTime, 
+          timeZone: 'UTC'
+        }
+      };
+  
+      console.log("Formatted payload being sent to API: ", formattedPayload);
+  
+      // Call the update function
+      await updateOutlookEvent(session.accessToken, selectedEvent.id, formattedPayload);
+      
+      // Close the modal and refresh events after update
       setIsModalOpen(false);
-      // Refetch events to update the UI
       fetchOutlookCalendarEvents(session.accessToken).then(setEvents);
     }
   };
+  
 
   const handleDelete = async (eventId: string) => {
     if (session?.accessToken) {
