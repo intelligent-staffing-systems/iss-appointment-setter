@@ -4,8 +4,8 @@
 import { SessionProvider, signOut, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
-// const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 1 hour in milliseconds
-const INACTIVITY_TIMEOUT = 5 * 1000; // 5 seconds
+const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 1 hour in milliseconds
+// const INACTIVITY_TIMEOUT = 5 * 1000; // 5 seconds
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return <SessionProvider>{children}</SessionProvider>;
