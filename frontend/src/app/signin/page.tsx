@@ -1,9 +1,8 @@
+// src/app/signin/page.tsx
 'use client';
 
-// src/app/signin/page.tsx
 import { signIn } from 'next-auth/react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGoogle, faMicrosoft } from '@fortawesome/free-brands-svg-icons';
+import { FaGoogle, FaMicrosoft } from 'react-icons/fa'; // Importing Google and Microsoft icons
 
 export default function SignInPage() {
   return (
@@ -17,7 +16,7 @@ export default function SignInPage() {
           onClick={() => signIn('azure-ad', { callbackUrl: '/dashboard' })}
           className="custom-btn flex items-center justify-center bg-gray-100 border border-gray-300 text-black font-bold py-2 px-4 rounded mb-4 w-full"
         >
-          <FontAwesomeIcon icon={faMicrosoft} className="mr-2" />
+          <FaMicrosoft className="mr-2" /> {/* Microsoft Icon */}
           Microsoft
         </button>
 
@@ -25,7 +24,7 @@ export default function SignInPage() {
           onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
           className="custom-btn flex items-center justify-center bg-gray-100 border border-gray-300 text-black font-bold py-2 px-4 rounded w-full"
         >
-          <FontAwesomeIcon icon={faGoogle} className="mr-2" />
+          <FaGoogle className="mr-2" /> {/* Google Icon */}
           Google
         </button>
 

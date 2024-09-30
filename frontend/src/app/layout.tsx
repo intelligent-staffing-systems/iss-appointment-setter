@@ -1,5 +1,7 @@
+//src/app/layout.tsx
 import './globals.css'
-import { Providers } from './providers'
+import { Providers } from './providers';
+import { InactivityProvider } from './providers';
 
 export default function RootLayout({
   children,
@@ -9,7 +11,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="vsc-initialized">
-        <Providers>{children}</Providers>
+        <Providers>
+          <InactivityProvider>
+                {children}
+          </InactivityProvider>
+        </Providers>
       </body>
     </html>
   )
