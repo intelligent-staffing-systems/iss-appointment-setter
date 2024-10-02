@@ -2,26 +2,74 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Define the color theme for light mode */
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --primary-color: rgb(0, 119, 185); /* Dark blue */
+  --secondary-color: #ffffff; /* White */
+  --text-color: #171717; /* Darker text */
 }
 
+/* Define the color theme for dark mode */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --primary-color: #001f3f; /* Even darker blue */
+    --secondary-color: #171717;
+    --text-color: #ededed;
   }
 }
 
+/* Global body styles */
 body {
-  color: var(--foreground);
+  color: var(--text-color);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Utility classes */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Custom button styles */
+  .custom-btn {
+    background-color: rgb(235, 251, 255); /* Light blue */
+    color: rgb(12, 103, 154); /* Dark blue text */
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+  }
+
+  .custom-btn:hover {
+    background-color: var(--primary-color); /* Dark blue */
+    color: var(--secondary-color); /* White */
+  }
+
+  /* Custom header styles */
+  .custom-header {
+    color: var(--secondary-color);
+    background-color: var(--primary-color);
+    padding: 1rem;
+    font-size: 1.25rem;
+    text-align: center;
+  }
+
+  /* Sidebar hover effects */
+  .sidebar-link:hover {
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+  }
+
+  /* Custom footer styles */
+  .custom-footer {
+    color: var(--secondary-color);
+    background-color: var(--primary-color);
+    padding: 1rem;
+    text-align: center;
   }
 }
