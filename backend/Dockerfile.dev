@@ -1,5 +1,5 @@
 # Use the official Ruby image
-FROM ruby:3.1.0
+FROM ruby:bookworm
 
 # Set the working directory
 WORKDIR /app
