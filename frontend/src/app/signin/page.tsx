@@ -2,14 +2,12 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
-import { FaGoogle, FaMicrosoft } from 'react-icons/fa'; // Importing Google and Microsoft icons
+import { FaGoogle, FaMicrosoft } from 'react-icons/fa';
 
 export default function SignInPage() {
   return (
     <div className="flex items-center justify-center h-screen" style={{ backgroundColor: 'rgb(29, 65, 101)' }}>
       <div className="p-10 bg-white shadow-md rounded-lg max-w-md w-full">
-
-        {/* Social Sign-In Buttons */}
         <h2 className="text-lg font-medium mb-6 text-center">Sign in with your social account</h2>
 
         <button

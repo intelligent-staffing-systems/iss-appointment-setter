@@ -22,3 +22,13 @@ Things you may want to cover:
 * Deployment instructions
 
 * ...
+
+# PostGRES code
+
+* docker exec -it iss-appointment-setter-db-1 psql -U postgres
+
+* \c your_database_name
+
+* \dt
+
+* \q

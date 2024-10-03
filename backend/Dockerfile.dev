@@ -1,7 +1,15 @@
+# Use the official Ruby image
 FROM ruby:bookworm
+
+# Set the working directory
 WORKDIR /app
+
+# Copy Gemfile and Gemfile.lock for dependency installation
 COPY Gemfile Gemfile.lock ./
 RUN bundle install
-COPY . .
-CMD ["rails", "server", "-b", "0.0.0.0"]
 
+# Copy the rest of the application code
+COPY . .
+
+# Command to start the Rails server and remove any existing PID file
+CMD ["sh", "-c", "rm -f tmp/pids/server.pid && rails server -b 0.0.0.0"]
