@@ -39,8 +39,7 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, account }) {
-      console.log('JWT callback - token:', token);
-      console.log('JWT callback - account:', account);
+
 
       // Check if account exists and add accessToken to the token
       if (account && account.access_token) {
@@ -50,9 +49,7 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      console.log('Session callback - session:', session);
-      console.log('Session callback - token:', token);
-
+    
       // Assign the accessToken from token to session
       session.accessToken = token.accessToken;
       return session;
