@@ -1,10 +1,10 @@
-# app/controllers/api/users_controller.rb
 module Api
   class UsersController < ApplicationController
     def create
       user = User.find_by(email: user_params[:email]) # Check if the user already exists
       if user
-        render json: { status: 'User already exists', user: user }, status: :conflict # Return a conflict response
+        # Instead of returning an error, return a success message for existing users
+        render json: { status: 'User already exists, proceeding with authentication', user: user }, status: :ok
       else
         user = User.new(user_params)
         if user.save
