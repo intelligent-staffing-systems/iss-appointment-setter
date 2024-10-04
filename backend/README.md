@@ -32,3 +32,8 @@ Things you may want to cover:
 * \dt
 
 * \q
+
+
+# Ruby Backend code
+
+* docker exec -it iss-appointment-setter-backend-1 bash
