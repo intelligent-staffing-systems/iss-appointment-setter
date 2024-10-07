@@ -1,14 +1,22 @@
-// app/dashboard/layout.tsx
-import { ReactNode } from 'react';
-import Link from 'next/link';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../api/auth/[...nextauth]/route';
-import SignOutButton from '../components/SignOutButton';
-import SignInPage from '../signin/page';
-import { FaHome, FaUser, FaCog } from 'react-icons/fa'; // Importing icons for Home, Profile, and Settings
+'use client';
 
-export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  const session = await getServerSession(authOptions);
+import { useSession } from 'next-auth/react'; // Use session hook for client-side session handling
+import { useState } from 'react';
+import { FaHome, FaUser, FaCog, FaUpload } from 'react-icons/fa'; // Import icons
+import SignOutButton from '../components/SignOutButton';
+import OutlookCalendar from '../components/OutlookCalendar'; // Home section content
+import Profile from './profile/page'; // Profile section content
+import SettingsPage from './settingspage/page'; // Settings section content
+import UploadPage from './upload/page'; // Upload section content
+import SignInPage from '../signin/page';
+
+export default function DashboardLayoutClient() {
+  const { data: session, status } = useSession(); // Use useSession to manage session on the client
+  const [activeSection, setActiveSection] = useState('home'); // Track active section
+
+  if (status === 'loading') {
+    return <div>Loading...</div>; // Loading state while session is being fetched
+  }
 
   if (!session) {
     return <SignInPage />;
@@ -24,18 +32,42 @@ export default async function DashboardLayout({ children }: { children: ReactNod
           </h2>
         </div>
         <nav className="mt-3 mr-2 flex flex-col items-center space-y-3">
-          <Link href="/dashboard" className="font-semibold block px-4 py-2 hover:bg-gray-600 transition rounded-lg text-center flex items-center space-x-2">
+          <button
+            onClick={() => setActiveSection('home')}
+            className={`font-semibold block px-4 py-2 transition rounded-lg text-center flex items-center space-x-2 ${
+              activeSection === 'home' ? 'bg-white text-black shadow-lg px-6 py-3' : 'hover:bg-gray-600'
+            }`}
+          >
             <FaHome /> {/* Home Icon */}
             <span>Home</span>
-          </Link>
-          <Link href="/dashboard/profile" className="font-semibold block px-4 py-2 hover:bg-gray-600 transition rounded-lg text-center flex items-center space-x-2">
+          </button>
+          <button
+            onClick={() => setActiveSection('profile')}
+            className={`font-semibold block px-4 py-2 transition rounded-lg text-center flex items-center space-x-2 ${
+              activeSection === 'profile' ? 'bg-white text-black shadow-lg px-6 py-3' : 'hover:bg-gray-600'
+            }`}
+          >
             <FaUser /> {/* Profile Icon */}
             <span>Profile</span>
-          </Link>
-          <Link href="/dashboard/settings" className="font-semibold block px-4 py-2 hover:bg-gray-600 transition rounded-lg text-center flex items-center space-x-2">
+          </button>
+          <button
+            onClick={() => setActiveSection('settings')}
+            className={`font-semibold block px-4 py-2 transition rounded-lg text-center flex items-center space-x-2 ${
+              activeSection === 'settings' ? 'bg-white text-black shadow-lg px-6 py-3' : 'hover:bg-gray-600'
+            }`}
+          >
             <FaCog /> {/* Settings Icon */}
             <span>Settings</span>
-          </Link>
+          </button>
+          <button
+            onClick={() => setActiveSection('upload')}
+            className={`font-semibold block px-4 py-2 transition rounded-lg text-center flex items-center space-x-2 ${
+              activeSection === 'upload' ? 'bg-white text-black shadow-lg px-6 py-3' : 'hover:bg-gray-600'
+            }`}
+          >
+            <FaUpload /> {/* Upload Icon */}
+            <span>Upload CSV</span>
+          </button>
           <SignOutButton />
         </nav>
       </aside>
@@ -49,8 +81,35 @@ export default async function DashboardLayout({ children }: { children: ReactNod
             <SignOutButton />
           </div>
         </header>
+
+        {/* Conditionally render sections based on activeSection */}
         <div className="p-6 flex-1 overflow-auto">
-          {children}
+          {activeSection === 'home' && (
+            <div className="grid grid-cols-1 lg:grid-cols-1 xl:grid-cols-2 gap-6">
+              <div className="bg-white p-6 rounded-lg shadow-md col-span-1 xl:col-span-2">
+                <h3 className="text-lg font-semibold mb-2 text-gray-800">Outlook Calendar</h3>
+                <OutlookCalendar />
+              </div>
+            </div>
+          )}
+          {activeSection === 'profile' && (
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold mb-2 text-gray-800">Profile</h3>
+              <Profile />
+            </div>
+          )}
+          {activeSection === 'settings' && (
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold mb-2 text-gray-800">Settings</h3>
+              <SettingsPage />
+            </div>
+          )}
+          {activeSection === 'upload' && (
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold mb-2 text-gray-800">Upload CSV/Excel File</h3>
+              <UploadPage />
+            </div>
+          )}
         </div>
       </main>
     </div>
