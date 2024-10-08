@@ -10,16 +10,17 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2024_10_03_062814) do
+ActiveRecord::Schema[7.2].define(version: 2024_10_08_175121) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
-  create_table "users", force: :cascade do |t|
+  create_table "users", primary_key: "uuid", id: :string, force: :cascade do |t|
     t.string "email"
     t.string "provider"
     t.string "google_token"
     t.string "outlook_token"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["uuid"], name: "index_users_on_uuid", unique: true
   end
 end

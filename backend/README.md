@@ -33,6 +33,10 @@ Things you may want to cover:
 
 * \q
 
+* sudo lsof -i :5432
+* sudo kill -9 {PID}
+
+
 
 # Ruby Backend code
 

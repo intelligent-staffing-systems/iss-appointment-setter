@@ -3,10 +3,10 @@ module Api
     def create
       user = User.find_by(email: user_params[:email]) # Check if the user already exists
       if user
-        # Instead of returning an error, return a success message for existing users
         render json: { status: 'User already exists, proceeding with authentication', user: user }, status: :ok
       else
         user = User.new(user_params)
+        user.uuid = SecureRandom.uuid # Generate a UUID for the user
         if user.save
           render json: { status: 'User created successfully', user: user }, status: :created
         else
