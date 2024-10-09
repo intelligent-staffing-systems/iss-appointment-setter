@@ -18,15 +18,18 @@ export default function SignInPage() {
           Microsoft
         </button>
 
-        <button
-          onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
-          className="custom-btn flex items-center justify-center bg-gray-100 border border-gray-300 text-black font-bold py-2 px-4 rounded w-full"
-        >
-          <FaGoogle className="mr-2" /> {/* Google Icon */}
-          Google
-        </button>
+        
 
       </div>
     </div>
   );
 }
+
+
+// <button
+//           onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
+//           className="custom-btn flex items-center justify-center bg-gray-100 border border-gray-300 text-black font-bold py-2 px-4 rounded w-full"
+//         >
+//           <FaGoogle className="mr-2" /> {/* Google Icon */}
+//           Google
+//         </button>
