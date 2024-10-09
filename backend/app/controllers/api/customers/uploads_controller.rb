@@ -59,6 +59,14 @@ module Api
           Rails.logger.error "Error processing upload: #{e.message}"
           render json: { error: e.message }, status: :internal_server_error
         end
+
+        # New index method to handle GET requests
+      def index
+        customers = Customer.all
+        render json: customers, status: :ok
+      rescue => e
+        render json: { error: e.message }, status: :internal_server_error
+       end
       end
     end
   end
