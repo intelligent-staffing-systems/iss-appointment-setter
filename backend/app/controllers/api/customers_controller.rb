@@ -1,7 +1,6 @@
 module Api
     class CustomersController < ApplicationController
       def upload
-        # Find the user by the provided user_id.
         user = User.find_by(id: params[:user_id])
   
         if user.nil?
@@ -11,39 +10,64 @@ module Api
   
         customers_data = params[:customers]
   
-        # Check if customer data is provided and is an array.
+        # Validate that the customer data is present and in the expected format.
         if customers_data.nil? || !customers_data.is_a?(Array)
           render json: { status: 'Error', message: 'Invalid or missing customer data' }, status: :unprocessable_entity
           return
         end
   
-        customers = []
+        added_customers = []
+        duplicate_customers = []
   
-        # Iterate through each customer in the data array.
         customers_data.each do |customer_data|
-          customer = user.customers.new(
-            name: customer_data['name'],
-            email: customer_data['email'],
-            phone: customer_data['phone']
-          )
+          # Ensure required fields are present and match expected format.
+          name = customer_data['name']
+          email = customer_data['email']
+          phone = customer_data['phone'] ? customer_data['phone'].to_s.gsub(/[^0-9]/, '') : nil
   
-          if customer.save
-            customers << customer
+          # Validate that name, email, and phone are present.
+          if name.blank? || email.blank? || phone.blank?
+            duplicate_customers << {
+              name: name || 'N/A',
+              email: email || 'N/A',
+              phone: phone || 'N/A',
+              message: 'Missing required fields'
+            }
+            next
+          end
+  
+          # Find or initialize the customer based on the phone number.
+          customer = user.customers.find_or_initialize_by(phone: phone)
+          customer.name = name
+          customer.email = email
+  
+          if customer.new_record?
+            if customer.save
+              added_customers << { name: customer.name, email: customer.email, phone: customer.phone }
+            else
+              duplicate_customers << {
+                name: customer.name,
+                email: customer.email,
+                phone: customer.phone,
+                message: customer.errors.full_messages.join(', ')
+              }
+            end
           else
-            render json: {
-              status: 'Error',
-              message: 'Failed to save some customers',
-              errors: customer.errors.full_messages
-            }, status: :unprocessable_entity
-            return
+            duplicate_customers << {
+              name: customer.name,
+              email: customer.email,
+              phone: customer.phone,
+              message: 'This phone number is already associated with another customer'
+            }
           end
         end
   
         render json: {
           status: 'Success',
-          message: 'Customers uploaded successfully',
-          customers: customers
-        }, status: :created
+          message: 'Customers processed',
+          added_customers: added_customers,
+          duplicate_customers: duplicate_customers
+        }, status: :ok
       rescue => e
         render json: {
           status: 'Error',

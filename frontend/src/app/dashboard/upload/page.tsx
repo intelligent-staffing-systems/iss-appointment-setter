@@ -1,85 +1,122 @@
-'use client';
-
 import { useState } from 'react';
-import Papa from 'papaparse'; // CSV parsing
-import * as XLSX from 'xlsx'; // Excel parsing
-import { FaArrowRight, FaPhoneAlt } from 'react-icons/fa';
+import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { useSession } from 'next-auth/react'; // Assuming you use next-auth for session handling
+
+// Function to upload selected items to the backend
+async function uploadCustomers(userId: string, customers: any[]) {
+  console.log('Data being sent to backend:', { user_id: userId, customers }); // Log data sent to the backend
+
+  try {
+    const response = await fetch('http://localhost:3001/api/customers/upload', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        customers,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server error: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    console.log('Response from backend:', result); // Log the backend response
+    return result;
+  } catch (error) {
+    console.error('Error uploading data:', error);
+    return { status: 'Error', message: 'Failed to upload data' };
+  }
+}
 
 export default function UploadPage() {
-  const [data, setData] = useState<any[]>([]); // Data parsed from the file
-  const [selectedItems, setSelectedItems] = useState<any[]>([]); // Items moved to the right side
+  const { data: session } = useSession(); // Use session hook to get user details
+  const [data, setData] = useState<any[]>([]);
   const [uploadMessage, setUploadMessage] = useState('');
-  const [callInProgress, setCallInProgress] = useState<number | null>(null); // Track which call is in progress
-  const [callLogs, setCallLogs] = useState<any[]>([]); // Call log after calls
-  const [expandedLog, setExpandedLog] = useState<number | null>(null); // Toggle call log details
+  const [backendMessages, setBackendMessages] = useState<string[]>([]); // Store messages from backend
 
   // Function to handle file selection
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    
+    // Extract userId from session
+    const userId = session?.userId;
+    console.log('Extracted userId from session:', userId);
+
+    if (file && userId) {
       const fileType = file.name.split('.').pop()?.toLowerCase();
       setUploadMessage(`Uploading ${file.name}...`);
 
       if (fileType === 'csv') {
-        // Parse CSV file
         Papa.parse(file, {
           header: true,
-          complete: (results) => {
-            setData(results.data); // Set parsed data
-            setUploadMessage('File uploaded successfully!');
+          complete: async (results) => {
+            console.log('Parsed CSV data:', results.data); // Log the parsed data
+            setData(results.data);
+            setUploadMessage('File uploaded successfully! Now sending data to the server...');
+            const response = await uploadCustomers(userId, results.data); // Upload parsed data with user ID
+            handleBackendResponse(response);
           },
           error: (error) => {
             setUploadMessage(`Error uploading file: ${error.message}`);
           },
         });
       } else if (fileType === 'xlsx') {
-        // Parse Excel file
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
           const data = new Uint8Array(e.target?.result as ArrayBuffer);
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
           const excelData = XLSX.utils.sheet_to_json(worksheet);
+          console.log('Parsed Excel data:', excelData); // Log the parsed data
           setData(excelData);
-          setUploadMessage('File uploaded successfully!');
+          setUploadMessage('File uploaded successfully! Now sending data to the server...');
+          const response = await uploadCustomers(userId, excelData); // Upload parsed data with user ID
+          handleBackendResponse(response);
         };
         reader.readAsArrayBuffer(file);
       } else {
         setUploadMessage('Unsupported file format. Please upload a CSV or Excel file.');
       }
+    } else {
+      setUploadMessage('Please sign in to upload files or userId is missing.');
     }
   };
 
-  // Function to handle moving selected items to the right
-  const handleMoveRight = (item: any) => {
-    setSelectedItems([...selectedItems, item]); // Add item to right side
-    setData(data.filter((d) => d !== item)); // Remove from left side
-  };
+  // Handle the backend response and set messages
+  const handleBackendResponse = (response: any) => {
+    if (response.status === 'Success') {
+      setUploadMessage(response.message);
 
-  // Function to handle calling a contact
-  const handleCall = (item: any, index: number) => {
-    setCallInProgress(index); // Mark which call is in progress
+      const added = response.added_customers?.map(
+        (cust: { name: string; phone: string }) => `Customer ${cust.name} (${cust.phone}) added successfully.`
+      ) || [];
 
-    // Simulate the call duration
-    setTimeout(() => {
-      setCallInProgress(null); // Call completed
-      setCallLogs([...callLogs, { ...item, time: new Date().toLocaleString() }]); // Add the contact to the call log
-      setSelectedItems(selectedItems.filter((d) => d !== item)); // Remove from selected items (right panel)
-    }, 2000); // Simulate a 2-second call duration
-  };
+      const duplicates = response.duplicate_customers?.map(
+        (dup: { name: string; phone: string; message: string }) =>
+          `Name: ${dup.name}, Phone: ${dup.phone}, Message: ${dup.message}`
+      ) || [];
 
-  // Function to toggle log details
-  const toggleLogDetails = (index: number) => {
-    setExpandedLog(expandedLog === index ? null : index); // Toggle log view
+      setBackendMessages([...added, ...duplicates]);
+    } else {
+      setUploadMessage(`Error: ${response.message}`);
+      const duplicates = response.duplicate_customers?.map(
+        (dup: { name: string; phone: string; message: string }) =>
+          `Name: ${dup.name}, Phone: ${dup.phone}, Message: ${dup.message}`
+      ) || [];
+      setBackendMessages(duplicates);
+    }
   };
 
   return (
     <div className="flex h-full bg-gray-100 p-6 space-x-6">
-      {/* Left Side (Uploaded Data) */}
-      <div className="w-1/2 bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Uploaded Data</h2>
+      <div className="w-full bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Upload CSV/Excel File</h2>
 
         <div className="flex flex-col space-y-4">
           <input
@@ -91,86 +128,17 @@ export default function UploadPage() {
 
           {uploadMessage && <p className="text-sm font-semibold mt-2 text-gray-700">{uploadMessage}</p>}
 
-          {/* Display uploaded data */}
-          {data.length > 0 && (
-            <div className="overflow-y-auto h-64 border border-gray-200 rounded-lg p-2">
-              {data.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between items-center p-2 border-b border-gray-300"
-                >
-                  <span>{item.first_name || item.name} {item.last_name || ''}</span>
-                  <button
-                    className="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition"
-                    onClick={() => handleMoveRight(item)}
-                  >
-                    <FaArrowRight />
-                  </button>
-                </div>
-              ))}
+          {/* Display Backend Messages */}
+          {backendMessages.length > 0 && (
+            <div className="mt-4 p-4 bg-yellow-100 text-yellow-800 border border-yellow-300 rounded">
+              <h3 className="font-semibold">Backend Messages:</h3>
+              <ul className="list-disc ml-5">
+                {backendMessages.map((msg, index) => (
+                  <li key={index}>{msg}</li>
+                ))}
+              </ul>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Right Side (Selected Items) */}
-      <div className="w-1/2 bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Selected Data</h2>
-
-        <div className="overflow-y-auto h-64 border border-gray-200 rounded-lg p-2">
-          {selectedItems.length > 0 ? (
-            selectedItems.map((item, index) => (
-              <div key={index} className="flex justify-between items-center p-2 border-b border-gray-300">
-                <span>{item.first_name || item.name} {item.last_name || ''}</span>
-                <button
-                  className="bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 transition"
-                  onClick={() => handleCall(item, index)}
-                  disabled={callInProgress === index}
-                >
-                  {callInProgress === index ? (
-                    <AiOutlineLoading3Quarters className="animate-spin" />
-                  ) : (
-                    <FaPhoneAlt />
-                  )}
-                </button>
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-600">No items selected.</p>
-          )}
-        </div>
-
-        {/* Call Logs */}
-        <div className="mt-8">
-          <h3 className="text-xl font-semibold text-gray-800">Call Log</h3>
-          <div className="mt-4 border-t border-gray-300 pt-4">
-            {callLogs.length > 0 ? (
-              callLogs.map((log, index) => (
-                <div key={index} className="flex justify-between items-center p-2 border-b border-gray-300">
-                  <span>
-                    Called {log.first_name || log.name} {log.last_name || ''} successfully at {log.time}
-                  </span>
-                  <button
-                    className="bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition"
-                    onClick={() => toggleLogDetails(index)}
-                  >
-                    Log
-                  </button>
-
-                  {expandedLog === index && (
-                    <div className="mt-2 p-2 border rounded-lg bg-gray-100">
-                      <p><strong>Call Details:</strong></p>
-                      <p>Name: {log.first_name || log.name} {log.last_name || ''}</p>
-                      <p>Time: {log.time}</p>
-                      <p>Additional details could go here...</p>
-                    </div>
-                  )}
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-600">No calls logged yet.</p>
-            )}
-          </div>
         </div>
       </div>
     </div>

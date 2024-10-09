@@ -9,13 +9,14 @@ import Profile from './profile/page'; // Profile section content
 import SettingsPage from './settingspage/page'; // Settings section content
 import UploadPage from './upload/page'; // Upload section content
 import SignInPage from '../signin/page';
+import LoadingScreen from '../components/LoadingScreen';
 
 export default function DashboardLayoutClient() {
   const { data: session, status } = useSession(); // Use useSession to manage session on the client
   const [activeSection, setActiveSection] = useState('home'); // Track active section
 
   if (status === 'loading') {
-    return <div>Loading...</div>; // Loading state while session is being fetched
+    return <LoadingScreen />; 
   }
 
   if (!session) {
