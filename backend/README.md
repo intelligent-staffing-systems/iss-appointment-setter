@@ -41,3 +41,5 @@ Things you may want to cover:
 # Ruby Backend code
 
 * docker exec -it iss-appointment-setter-backend-1 bash
+
+* sudo chown -R lkingl123:lkingl123 .    
