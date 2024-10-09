@@ -1,12 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
-import { AiOutlineLoading3Quarters } from 'react-icons/ai';
-import { useSession } from 'next-auth/react'; // Assuming you use next-auth for session handling
+import { useSession } from 'next-auth/react';
 
 // Function to upload selected items to the backend
 async function uploadCustomers(userId: string, customers: any[]) {
-  console.log('Data being sent to backend:', { user_id: userId, customers }); // Log data sent to the backend
+  console.log('Data being sent to backend:', { user_id: userId, customers });
 
   try {
     const response = await fetch('http://localhost:3001/api/customers/upload', {
@@ -25,7 +24,7 @@ async function uploadCustomers(userId: string, customers: any[]) {
     }
 
     const result = await response.json();
-    console.log('Response from backend:', result); // Log the backend response
+    console.log('Response from backend:', result);
     return result;
   } catch (error) {
     console.error('Error uploading data:', error);
@@ -34,20 +33,19 @@ async function uploadCustomers(userId: string, customers: any[]) {
 }
 
 export default function UploadPage() {
-  const { data: session } = useSession(); // Use session hook to get user details
-  const [data, setData] = useState<any[]>([]);
+  const { data: session } = useSession();
+  const [fileName, setFileName] = useState<string | null>(null);
   const [uploadMessage, setUploadMessage] = useState('');
-  const [backendMessages, setBackendMessages] = useState<string[]>([]); // Store messages from backend
+  const [backendMessages, setBackendMessages] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Function to handle file selection
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    
-    // Extract userId from session
     const userId = session?.userId;
     console.log('Extracted userId from session:', userId);
 
     if (file && userId) {
+      setFileName(file.name);
       const fileType = file.name.split('.').pop()?.toLowerCase();
       setUploadMessage(`Uploading ${file.name}...`);
 
@@ -55,10 +53,9 @@ export default function UploadPage() {
         Papa.parse(file, {
           header: true,
           complete: async (results) => {
-            console.log('Parsed CSV data:', results.data); // Log the parsed data
-            setData(results.data);
+            console.log('Parsed CSV data:', results.data);
             setUploadMessage('File uploaded successfully! Now sending data to the server...');
-            const response = await uploadCustomers(userId, results.data); // Upload parsed data with user ID
+            const response = await uploadCustomers(userId, results.data);
             handleBackendResponse(response);
           },
           error: (error) => {
@@ -73,10 +70,9 @@ export default function UploadPage() {
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
           const excelData = XLSX.utils.sheet_to_json(worksheet);
-          console.log('Parsed Excel data:', excelData); // Log the parsed data
-          setData(excelData);
+          console.log('Parsed Excel data:', excelData);
           setUploadMessage('File uploaded successfully! Now sending data to the server...');
-          const response = await uploadCustomers(userId, excelData); // Upload parsed data with user ID
+          const response = await uploadCustomers(userId, excelData);
           handleBackendResponse(response);
         };
         reader.readAsArrayBuffer(file);
@@ -88,7 +84,6 @@ export default function UploadPage() {
     }
   };
 
-  // Handle the backend response and set messages
   const handleBackendResponse = (response: any) => {
     if (response.status === 'Success') {
       setUploadMessage(response.message);
@@ -103,6 +98,11 @@ export default function UploadPage() {
       ) || [];
 
       setBackendMessages([...added, ...duplicates]);
+
+      // Clear the file input value to allow re-upload of the same file if needed
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } else {
       setUploadMessage(`Error: ${response.message}`);
       const duplicates = response.duplicate_customers?.map(
@@ -120,12 +120,14 @@ export default function UploadPage() {
 
         <div className="flex flex-col space-y-4">
           <input
+            ref={fileInputRef}
             type="file"
             accept=".csv, .xlsx"
             onChange={handleFileChange}
             className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
           />
 
+          {fileName && <p className="text-sm mt-2 text-gray-500">Selected File: {fileName}</p>}
           {uploadMessage && <p className="text-sm font-semibold mt-2 text-gray-700">{uploadMessage}</p>}
 
           {/* Display Backend Messages */}
